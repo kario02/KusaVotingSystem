@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Process Overview</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/voting_overview.css') }}">
+    <style>
+        /* General Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e88e5;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container */
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 500px;
+}
+
+/* Heading */
+h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+/* Paragraph */
+p {
+    font-size: 16px;
+    color: #333;
+}
+
+/* Steps List */
+.steps {
+    list-style: none;
+    padding: 0;
+}
+
+.steps li {
+    font-size: 18px;
+    background: #e3f2fd;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+.steps li span {
+    font-size: 20px;
+    color: #1e88e5;
+    margin-right: 10px;
+}
+
+/* Vote Button */
+.vote-btn {
+    display: inline-block;
+    background: #1e88e5;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 18px;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+
+.vote-btn:hover {
+    background: #1565c0;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Voting Process Overview</h2>
+        <p>Follow these steps to vote:</p>
+        <ul class="steps">
+            <li><span>1.</span> Log in to your account.</li>
+            <li><span>2.</span> Navigate to the voting page.</li>
+            <li><span>3.</span> Select your preferred candidate for each position.</li>
+            <li><span>4.</span> Click "Submit Vote" to finalize your choice.</li>
+        </ul>
+        <a href="{{ url_for('vote_now') }}" class="vote-btn">Proceed to Vote</a>
+    </div>
+</body>
+</html>

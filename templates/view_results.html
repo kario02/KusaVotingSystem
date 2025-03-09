@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Results</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <style>
+        body {
+             font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #144ac8, #004080, #0059b3);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: auto;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .results-container {
+            width: 80%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            color: #001f3f;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        .progress {
+            background-color: #ddd;
+            border-radius: 5px;
+            width: 100%;
+            height: 20px;
+            margin: 5px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            text-align: center;
+            color: white;
+            border-radius: 5px;
+            line-height: 20px;
+        }
+
+        /* Button */
+        button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+        h2{
+            color: #001f3f;
+        }
+         .chart-container {
+            margin-top: 30px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="results-container">
+    <h2>Election Results</h2>
+
+    <!-- Search Bar -->
+    <input type="text" id="search" placeholder="Search candidate..." onkeyup="filterResults()">
+
+    <!-- Results Table -->
+    <div style="overflow-x: auto;">
+    <table>
+        <thead>
+            <tr>
+                <th>Candidate</th>
+                <th>Position</th>
+                <th>Votes</th>
+                <th>Percentage</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTable">
+            {% for candidate_id, data in results.items() %}
+            <tr>
+                <td>{{ data.name }}</td>
+                <td>{{ data.position }}</td>
+                <td>{{ data.votes }}</td>
+                <td>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: {{ data.percentage }}%;">{{ data.percentage }}%</div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+        </div>
+
+     <!-- Chart Section -->
+    <div class="chart-container">
+        <h2>Voting Results Chart</h2>
+        <canvas id="resultsChart"></canvas>
+    </div>
+
+    <!-- Download Button -->
+    <button onclick="downloadResults()">Download Results</button>
+</div>
+
+<script>
+     // Extract candidate names and votes from the table
+    let candidateNames = [];
+    let candidateVotes = [];
+
+    document.querySelectorAll("#resultsTable tr").forEach(row => {
+        let name = row.cells[0].textContent;
+        let votes = parseInt(row.cells[2].textContent);
+        candidateNames.push(name);
+        candidateVotes.push(votes);
+    });
+
+     // Generate Chart using Chart.js
+    let ctx = document.getElementById('resultsChart').getContext('2d');
+    let resultsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: candidateNames,
+            datasets: [{
+                label: 'Votes',
+                data: candidateVotes,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Filter candidates in the table
+    function filterResults() {
+        let searchValue = document.getElementById("search").value.toLowerCase();
+        let rows = document.getElementById("resultsTable").getElementsByTagName("tr");
+
+        for (let row of rows) {
+            let candidateName = row.getElementsByTagName("td")[0].textContent.toLowerCase();
+            row.style.display = candidateName.includes(searchValue) ? "" : "none";
+        }
+    }
+
+    // Download results as a CSV file
+    function downloadResults() {
+        let csv = "Candidate,Position,Votes,Percentage\n";
+        let rows = document.getElementById("resultsTable").getElementsByTagName("tr");
+
+        for (let row of rows) {
+            let cols = row.getElementsByTagName("td");
+            csv += `${cols[0].textContent},${cols[1].textContent},${cols[2].textContent},${cols[3].textContent.replace('%', '')}\n`;
+        }
+
+        let blob = new Blob([csv], { type: "text/csv" });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "voting_results.csv";
+        link.click();
+    }
+</script>
+
+</body>
+</html>

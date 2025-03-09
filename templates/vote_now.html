@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vote Now</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+       * {
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+       }
+
+       body {
+           font-family: Arial, sans-serif;
+           background: linear-gradient(135deg, #144ac8, #004080);
+           color: white;
+           text-align: center;
+           padding: 20px;
+       }
+
+       .container {
+           max-width: 800px;
+           margin: auto;
+           background: rgba(255, 255, 255, 0.1);
+           padding: 20px;
+           border-radius: 10px;
+           box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+       }
+
+       .position-container {
+           margin-bottom: 20px;
+       }
+
+       .candidates-grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+           gap: 20px;
+           padding: 20px;
+       }
+
+       .candidate-card {
+           background: rgba(255, 255, 255, 0.2);
+           padding: 15px;
+           border-radius: 10px;
+           text-align: center;
+           box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+           transition: transform 0.3s ease;
+       }
+
+       .candidate-card:hover {
+           transform: scale(1.05);
+           box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+       }
+
+       .candidate-card input[type="radio"] {
+           margin-top: 10px;
+           transform: scale(1.2);
+           cursor: pointer;
+       }
+
+       .nav-buttons {
+           margin-top: 20px;
+       }
+
+       .btn {
+           padding: 10px 20px;
+           font-size: 16px;
+           border: none;
+           border-radius: 8px;
+           cursor: pointer;
+           transition: 0.3s;
+       }
+
+       .btn-next {
+           background: #ffc107;
+           color: black;
+       }
+
+       .btn-prev {
+           background: #ccc;
+           color: black;
+       }
+
+       .btn:hover {
+           opacity: 0.8;
+       }
+
+       .summary {
+           display: none;
+           text-align: left;
+           background: rgba(255, 255, 255, 0.2);
+           padding: 15px;
+           border-radius: 10px;
+           margin-top: 20px;
+       }
+
+       .vote-btn {
+           background: #28a745;
+           color: white;
+           padding: 10px 20px;
+           font-size: 18px;
+           border: none;
+           border-radius: 8px;
+           cursor: pointer;
+           margin-top: 20px;
+           display: none;
+       }
+       .candidate-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+    </style>
+</head>
+<body>
+
+    <h1>Vote Now</h1>
+
+    <form id="vote-form" method="POST" action="{{ url_for('vote_now') }}">
+        <div class="container">
+            <div id="voting-steps">
+                <div class="position-container">
+                    <label class="position-label">Select Position:</label>
+                    <select id="position-dropdown" class="position-dropdown" required>
+                        <option value="" disabled selected>Select a position</option>
+                        {% for position in positions %}
+                        <option value="{{ position }}">{{ position }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="candidates-container" class="candidates-grid"></div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn btn-prev" id="prev-btn" style="display: none;">Previous</button>
+                    <button type="button" class="btn btn-next" id="next-btn" disabled>Next</button>
+                </div>
+            </div>
+
+            <!-- Summary Confirmation -->
+            <div id="summary-section" class="summary">
+                <h2>Confirm Your Votes</h2>
+                <ul id="summary-list"></ul>
+                <button type="submit" class="vote-btn">Submit Vote</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        let positions = {{ positions | tojson }};
+        let votes = {};  // Stores selected candidates
+        let currentPositionIndex = 0;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const positionDropdown = document.getElementById("position-dropdown");
+            const candidatesContainer = document.getElementById("candidates-container");
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+            const summarySection = document.getElementById("summary-section");
+            const summaryList = document.getElementById("summary-list");
+            const voteBtn = document.querySelector(".vote-btn");
+
+            function loadPosition(index) {
+                if (index >= positions.length) {
+                    showSummary();
+                    return;
+                }
+
+                positionDropdown.value = positions[index]; // Auto-select position
+                candidatesContainer.innerHTML = ""; // Clear previous candidates
+
+                fetch(`/api/get_candidates?position=${positions[index]}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.candidates.length === 0) {
+                            candidatesContainer.innerHTML = "<p>No candidates found.</p>";
+                            return;
+                        }
+
+                        data.candidates.forEach(candidate => {
+                            const candidateCard = document.createElement("div");
+                            candidateCard.classList.add("candidate-card");
+                            candidateCard.innerHTML = `
+                                 <img src="${candidate.image}" alt="${candidate.name}" class="candidate-image">
+                                <h3>${candidate.name}</h3>
+                                <input type="radio" name="candidate" value="${candidate.id}" ${votes[positions[index]] === candidate.id ? "checked" : ""} required>
+                            `;
+                            candidatesContainer.appendChild(candidateCard);
+                        });
+
+                        nextBtn.disabled = true;
+                        document.querySelectorAll('input[name="candidate"]').forEach(input => {
+                            input.addEventListener("change", () => {
+                                votes[positions[currentPositionIndex]] = input.value;
+                                nextBtn.disabled = false;
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        candidatesContainer.innerHTML = "<p style='color:red;'>Error fetching candidates.</p>";
+                        console.error("Error:", error);
+                    });
+
+                prevBtn.style.display = index > 0 ? "inline-block" : "none";
+            }
+
+            function showSummary() {
+                document.getElementById("voting-steps").style.display = "none";
+                summarySection.style.display = "block";
+                summaryList.innerHTML = "";
+                for (let position in votes) {
+                    summaryList.innerHTML += `<li><strong>${position}:</strong> Candidate ID ${votes[position]}</li>`;
+                }
+                voteBtn.style.display = "block";
+            }
+
+            nextBtn.addEventListener("click", () => {
+                if (!votes[positions[currentPositionIndex]]) return;
+                currentPositionIndex++;
+                loadPosition(currentPositionIndex);
+            });
+
+            prevBtn.addEventListener("click", () => {
+                currentPositionIndex--;
+                loadPosition(currentPositionIndex);
+            });
+
+            loadPosition(currentPositionIndex);
+        });
+    </script>
+
+</body>
+</html>

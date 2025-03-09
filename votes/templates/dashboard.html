@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUSA Voting System Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.0.1/chart.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.0.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #00264d, #004080, #0059b3);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #001f3f;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            animation: slideIn 1s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #004080;
+            transform: scale(1.1);
+        }
+
+        .main-content {
+            margin-left: 270px;
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            animation: fadeInDown 1.5s ease;
+        }
+
+        @keyframes fadeInDown {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .candidate-slider {
+            position: relative;
+            overflow: hidden;
+            height: 200px;
+        }
+
+        .candidate-slider .track {
+            display: flex;
+            transition: transform 1s ease;
+        }
+
+        .candidate {
+            min-width: 200px;
+            margin-right: 20px;
+            text-align: center;
+        }
+
+        .candidate img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .grid-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 15px;
+            background: #0059b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #004080;
+            transform: scale(1.1);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#overview">Overview</a>
+        <a href="#analytics">Analytics</a>
+        <a href="#candidates">Candidates</a>
+        <a href="#results">Results</a>
+        <a href="#logout">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>KUSA Voting System Dashboard</h1>
+        </div>
+
+        <div id="progress" class="card">
+            <h2>Voting Progress</h2>
+            <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </div>
+
+        <div id="candidates" class="card">
+            <h2>Candidates</h2>
+            <div class="candidate-slider">
+                <div class="track" id="candidateTrack">
+                    <div class="candidate">
+                        <img src="candidate1.jpg" alt="Candidate 1">
+                        <h3>Candidate 1</h3>
+                        <p>Innovation and progress for students.</p>
+                    </div>
+                    <div class="candidate">
+                        <img src="candidate2.jpg" alt="Candidate 2">
+                        <h3>Candidate 2</h3>
+                        <p>Transparency and accountability.</p>
+                    </div>
+                    <div class="candidate">
+                        <img src="candidate3.jpg" alt="Candidate 3">
+                        <h3>Candidate 3</h3>
+                        <p>Equal opportunities for all.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-buttons">
+            <button class="btn" onclick="location.href='#overview'">Vote Now</button>
+            <button class="btn" onclick="location.href='#candidates'">View Candidates</button>
+            <button class="btn" onclick="location.href='#results'">View Results</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 KUSA Voting System. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // Chart.js Voting Progress
+        const ctxProgress = document.getElementById('progressChart').getContext('2d');
+        new Chart(ctxProgress, {
+            type: 'line',
+            data: {
+                labels: ['10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM'],
+                datasets: [{
+                    label: 'Votes Progress',
+                    data: [5, 15, 25, 40, 60],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Candidate Slider Logic
+        const candidateTrack = document.getElementById('candidateTrack');
+        let currentSlide = 0;
+        const totalSlides = candidateTrack.children.length;
+
+        setInterval(() => {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            candidateTrack.style.transform = `translateX(-${currentSlide * 220}px)`;
+        }, 3000);
+    </script>
+</body>
+</html>

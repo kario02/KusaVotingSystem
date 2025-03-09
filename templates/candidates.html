@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidates - KUSA Voting System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #144ac8, #004080, #0059b3);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease;
+        }
+        .candidates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .candidate-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .candidate-card:hover {
+            transform: translateY(-5px);
+        }
+        .candidate-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #0059b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background: #004080;
+            transform: scale(1.1);
+        }
+        .vote-btn {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #0059b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .vote-btn i {
+            font-size: 18px;
+        }
+        .vote-btn:hover {
+            background: #004080;
+            transform: scale(1.05);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .candidate-form {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid white;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Meet Your Candidates</h1>
+
+        <button class="btn" onclick="toggleForm()">
+            <i class="fas fa-user-plus"></i> Add Candidate
+        </button>
+
+        <div class="candidate-form" id="candidateForm">
+            <h2>Candidate Details</h2>
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <td><input type="text" id="name"></td>
+                </tr>
+                <tr>
+                    <th>Position</th>
+                    <td><input type="text" id="position"></td>
+                </tr>
+                <tr>
+                    <th>Manifesto</th>
+                    <td><textarea id="manifesto"></textarea></td>
+                </tr>
+                <tr>
+                    <th>Image</th>
+                    <td><input type="file" id="image"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: center;">
+                        <button class="btn" onclick="submitCandidate()">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="candidates" id="candidatesList">
+            <div class="candidate-card">
+                <img src="../static/kusa/images/candidate1.jpg" alt="Candidate 1">
+                <h3>Candidate 1</h3>
+                <p>"Innovation and Progress for Students"</p>
+                <form action="vote.php" method="POST">
+                    <button type="submit" class="vote-btn">
+                        <i class="fas fa-vote-yea"></i> Vote Now
+                    </button>
+                </form>
+            </div>
+            <div class="candidate-card">
+                <img src="../static/kusa/images/candidate2.jpg" alt="Candidate 2">
+                <h3>Candidate 2</h3>
+                <p>"Transparency and Accountability"</p>
+                <form action="vote.php" method="POST">
+                    <button type="submit" class="vote-btn">
+                        <i class="fas fa-vote-yea"></i> Vote Now
+                    </button>
+                </form>
+            </div>
+            <div class="candidate-card">
+                <img src="../static/kusa/images/candidate3.jpg" alt="Candidate 3">
+                <h3>Candidate 3</h3>
+                <p>"Equal Opportunities for All"</p>
+                <form action="vote.php" method="POST">
+                    <button type="submit" class="vote-btn">
+                        <i class="fas fa-vote-yea"></i> Vote Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+     <script>
+        function toggleForm() {
+            let form = document.getElementById('candidateForm');
+            form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+        }
+
+         // Fetch candidates from backend
+    function loadCandidates() {
+        fetch('/api/candidates')
+            .then(response => response.json())
+            .then(data => {
+                let candidateList = document.getElementById('candidatesList');
+                candidateList.innerHTML = '';
+
+                data.forEach(candidate => {
+                    candidateList.innerHTML += `
+                         <div class="candidate-card">
+                        <img src="/static/uploads/${candidate.image}" alt="${candidate.name}">
+                        <h3>${candidate.name}</h3>
+                        <p>${candidate.manifesto}</p>
+                        <form action="/vote_now" method="POST">
+                            <input type="hidden" name="candidate_id" value="${candidate.id}">
+                            <button type="submit" class="vote-btn">
+                                <i class="fas fa-vote-yea"></i> Vote Now
+                            </button>
+                        </form>
+                    </div>
+                    `;
+                });
+            })
+            .catch(error => console.error('Error loading candidates:', error));
+    }
+
+     // Submit new candidate
+    function submitCandidate() {
+        let formData = new FormData();
+        formData.append("name", document.getElementById("name").value);
+        formData.append("position", document.getElementById("position").value);
+        formData.append("manifesto", document.getElementById("manifesto").value);
+        // formData.append("image", document.getElementById("image").files[0]);
+
+        let imageInput = document.getElementById("image");
+        if (imageInput.files.length > 0) {
+            formData.append("image", imageInput.files[0]);
+        }
+
+
+        fetch('/api/add_candidate', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert("Error:" + data.error);
+            } else {
+                alert(data.message);
+                toggleForm();
+                loadCandidates();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Load candidates on page load
+    window.onload = loadCandidates;
+
+
+        // function saveCandidate() {
+        //     alert("Candidate details saved successfully!");
+        // }
+    </script>
+</body>
+</html>

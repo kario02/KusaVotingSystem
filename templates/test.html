@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUSA Voting System</title>
+    <link rel="stylesheet" href="kusa.css">
+
+    <style>
+        /* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #144ac8;
+    color: #FFFFFF;
+    box-sizing: border-box;
+}
+ @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(-50px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animated-heading {
+            animation: fadeIn 2s ease-in-out;
+            font-size: 2em;
+            color: whitesmoke;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+         .intro-text {
+            text-align: center;
+        }
+        .intro-text .btn {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background-color: #1E293B;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .intro-text .btn:hover {
+            background-color: #011129;
+        }
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #EF4444;
+    color: #FFFFFF;
+    border-radius: 5px;
+    margin: 5px 0;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #DC2626;
+}
+
+/* Header Styles */
+.header {
+    background-color: #1E293B;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+ .scrolling-motto {
+        position: absolute;
+        top: 0;
+        right: 10%;
+        font-size: 1.2em;
+        color: white;
+
+        padding: 5px 10px;
+        white-space: nowrap;
+        animation: scrollLeft 10s linear infinite;
+    }
+
+    @keyframes scrollLeft {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-300%); }
+    }
+
+    .header {
+        position: relative;
+        background-color: #0047AB;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        overflow: hidden;
+    }
+
+.header .logo img {
+    height: 50px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Main Content */
+.main-content {
+    padding: 40px 20px;
+}
+
+.intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.intro-text {
+    flex: 1;
+}
+
+.intro-image img {
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Services Section */
+.services {
+    margin-top: 40px;
+}
+
+.services h2 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.service-grid {
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+}
+
+.service-item {
+    background-color: #1E293B;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.service-item h3 {
+    margin-bottom: 10px;
+}
+
+.service-item p {
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+/* Vision Section */
+.vision {
+    background-color: #144ac8;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.vision h2 {
+    font-size: 2rem;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+.vision-content p {
+    font-size: 1.2rem;
+    color: wheat;
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Support Section */
+.support {
+    background-color: #144ac8;
+    padding: 40px 20px;
+}
+
+.support h2 {
+    text-align: center;
+    font-size: 2rem;
+    color: #ffffff;
+    margin-bottom: 30px;
+}
+
+.support-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.support-item {
+    background: #1E293B;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    width: 300px;
+    max-width: 100%;
+}
+
+.support-item h3 {
+    font-size: 1.5rem;
+    color: #FFFFFF;
+    margin-bottom: 15px;
+}
+
+.support-item p {
+    font-size: 1rem;
+    color: wheat;
+    margin-bottom: 20px;
+}
+
+.support-item .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #972a3d;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.support-item .btn:hover {
+    background-color: #fa0530;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .support-grid {
+        flex-direction: column;
+        gap: 30px;
+    }
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #1E293B;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    margin-top: 40px;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 50%;
+    text-align: center;
+    color: #001f3f;
+}
+
+.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <div class="logo">
+            <img src="../static/kusa/images/Kusa_logo.png" alt="KUSA Logo">
+        </div>
+         <div class="scrolling-motto">Empowering Every Voice, Every Vote, and Ensuring Transparency </div>
+        <h1>Welcome to KUSA Voting System</h1>
+    </header>
+
+    <!-- Main Section -->
+    <main class="main-content">
+        <section class="intro">
+            <div class="intro-text">
+                <h2 class="animated-heading">KUSA (Kenyatta University Students Association) Voting System</h2>
+                <p><a href="{{ url_for('login') }}" class="btn">Get Started</a></p>
+                <p><a href="{{ url_for('sign_up') }}" class="btn">Sign Up</a></p>
+            </div>
+            <div class="intro-image">
+                <img src="../static/kusa/images/Welcome.jpg" alt="Typing Hands">
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section class="services">
+            <h2>Services</h2>
+            <div class="service-grid">
+                <div class="service-item">
+                    <h3>Want to be a Candidate?</h3>
+                    <button class="btn" onclick="opensModal()">Register</button>
+
+<!-- Modal Structure -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closesModal()">&times;</span>
+        <h2>Hello Candidate</h2>
+        <p>Please sign up first.</p>
+        <a href="{{ url_for('register_candidate') }}" class="btn">Register</a>
+    </div>
+</div>
+
+                </div>
+                <div class="service-item">
+                    <h3>Voting Process Overview</h3>
+
+                    <a href="{{ url_for('voting_overview') }}" class="btn">view</a>
+
+                </div>
+                <div class="service-item">
+                    <h3>Voting Guidance</h3>
+
+                    <button onclick="openModal()" class="btn">View</button>
+                    <div id="votingModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Voting Guidance</h2>
+        <p>1. Select a candidate for each position.</p>
+        <p>2. Ensure you review your choices before submitting.</p>
+        <p>3. You can only vote once per position.</p>
+    </div>
+</div>
+
+
+                </div>
+            </div>
+        </section>
+
+          <!-- Vision Section -->
+        <section class="vision">
+            <h2>Our Vision</h2>
+            <div class="vision-content">
+                <p>
+                    At KUSA, we aim to empower every voice, ensure transparent elections, and foster a culture of integrity and fairness.
+                    Our vision is to enable students to exercise their voting rights through a secure, user-friendly, and transparent platform.
+                </p>
+            </div>
+        </section>
+
+          <!-- Support Section -->
+        <section class="support">
+            <h2>Need Help?</h2>
+            <div class="support-grid">
+                <div class="support-item">
+                    <h3>Technical Assistance</h3>
+                    <p>If you encounter issues, feel free to contact our technical team for support.</p>
+                    <a href="mailto:support@kusa.com" class="btn">Email Support</a>
+                </div>
+                <div class="support-item">
+                    <h3>Frequently Asked Questions</h3>
+                    <p>Find answers to common questions about the KUSA voting process.</p>
+                    <a href="#" class="btn">View FAQ</a>
+                </div>
+                <div class="support-item">
+                    <h3>Contact Us</h3>
+                    <p>Reach out for any general inquiries or feedback about our system.</p>
+                    <a href="#" class="btn">Get in Touch</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <p>&copy; 2025 KUSA Voting System. All Rights Reserved.</p>
+    </footer>
+    <script>
+
+function openModal() {
+    document.getElementById("votingModal").style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("votingModal").style.display = "none";
+}
+// Function to open the modal
+function opensModal() {
+    document.getElementById("registerModal").style.display = "block";
+}
+
+// Function to close the modal
+function closesModal() {
+    document.getElementById("registerModal").style.display = "none";
+}
+
+// Close the modal when clicking outside of it
+window.onclick = function(event) {
+    var modal = document.getElementById("registerModal");
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+};
+
+    </script>
+
+</body>
+</html>
