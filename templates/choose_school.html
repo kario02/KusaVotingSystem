@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Choose School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #144ac8, #004080);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        .btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #ffc107;
+            color: black;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Choose Your School</h1>
+
+    <div class="container">
+        <form action="{{ url_for('vote_now') }}" method="GET">
+            <label for="school">Select Your School:</label>
+            <select id="school" name="school" required>
+                <option value="" disabled selected>Select a school</option>
+                {% for school in schools %}
+                    <option value="{{ school }}">{{ school }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn">Next</button>
+        </form>
+    </div>
+
+</body>
+</html>

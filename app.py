@@ -9,6 +9,7 @@ import mysql.connector
 from datetime import datetime
 from flask_mysqldb import MySQL
 from flask_cors import CORS
+from flask_session import Session
 
 
 app = Flask(__name__)
@@ -19,6 +20,10 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'brayookk7'
 app.config['MYSQL_DB'] = 'kusa'
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_USE_SIGNER"] = True
+Session(app)
 CORS(app)
 
 mysql=MySQL(app)
@@ -56,6 +61,7 @@ class Candidate(db.Model):
     name = db.Column(db.String(255), nullable=False)
     position = db.Column(db.String(255), nullable=False)
     manifesto = db.Column(db.Text, nullable=False)
+    school = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
 
@@ -152,7 +158,7 @@ def gets_candidates():
 def get_candidates():
     candidates = Candidate.query.all()
     return jsonify([
-        {"id": c.id, "name": c.name, "position": c.position, "manifesto": c.manifesto, "image": c.image}
+        {"id": c.id, "name": c.name, "position": c.position, "manifesto": c.manifesto, "school": c.school, "image": c.image}
         for c in candidates
     ])
 
@@ -164,9 +170,10 @@ def add_candidate():
         name = request.form['name']
         position = request.form['position']
         manifesto = request.form['manifesto']
+        school = request.form['school']
         image = request.files.get("image")
 
-        if not name or not position or not manifesto:
+        if not name or not position or not manifesto or not school:
             return jsonify({"error": "Missing required fields!"}), 400
 
 
@@ -176,13 +183,13 @@ def add_candidate():
             image_path = os.path.join(UPLOAD_FOLDER, image_filename)
             image.save(image_path)
 
-        print(f"Received Data -> Name: {name}, Position: {position}, Manifesto: {manifesto}, Image:{image}")
+        print(f"Received Data -> Name: {name}, Position: {position}, Manifesto: {manifesto}, school: {school}, Image:{image}")
 
         try:
             # Insert Data into MySQL
             cursor = mysql.connection.cursor()
-            query = "INSERT INTO candidate (name, position, manifesto, image) VALUES (%s, %s, %s, %s)"
-            values = (name, position, manifesto, image_filename)
+            query = "INSERT INTO candidate (name, position, manifesto, school, image) VALUES (%s, %s, %s, %s, %s)"
+            values = (name, position, manifesto, school, image_filename)
             cursor.execute(query, values)
             mysql.connection.commit()
             cursor.close()
@@ -200,11 +207,12 @@ def add_candidate():
 @login_required
 def api_get_candidates():
     position = request.args.get('position')
+    school = request.args.get('school')
 
-    if not position:
-        return jsonify({"error": "Position is required"}), 400
+    if not position or not school:
+        return jsonify({"error": "Missing Position or School"}), 400
 
-    candidates = Candidate.query.filter_by(position=position).all()
+    candidates = Candidate.query.filter_by(position=position, school=school).all()
     candidates_data = [{"id": c.id, "name": c.name, "image": url_for('static', filename=f'uploads/{c.image}') if c.image else url_for('static', filename='default.png') } for c in candidates]
 
     return jsonify({"candidates": candidates_data})
@@ -213,45 +221,72 @@ def api_get_candidates():
 @app.route('/vote_now', methods=['GET', 'POST'])
 @login_required
 def vote_now():
-    query = text("SELECT DISTINCT position FROM candidate")
-    positions = [row[0] for row in db.session.execute(query).fetchall()]  # Define positions
-    session.setdefault('votes', {})  # Store selected votes in session
+    school = request.args.get('school')  # Get selected school from query parameters
+    if not school:
+        return redirect(url_for('choose_school'))  # Redirect if no school is selected
+
+    query = text("SELECT DISTINCT position FROM candidate WHERE school = :school")
+    positions = [row[0] for row in db.session.execute(query, {"school": school}).fetchall()]
+    session['votes'] = {}  # Store selected votes in session
 
     if request.method == 'POST':
         position = request.form.get('position')
         candidate_id = request.form.get('candidate')
-        session['votes'][position] = candidate_id  # Store vote in session
+        session['votes'][position] = candidate_id
 
         # Move to next position
         next_index = positions.index(position) + 1
         if next_index < len(positions):
-            return redirect(url_for('vote_now', position=positions[next_index]))
+            return redirect(url_for('vote_now', school=school, position=positions[next_index]))
         else:
             return redirect(url_for('confirm_vote'))
 
     # Get current position
     position = request.args.get('position', positions[0]) if positions else None
-    candidates = Candidate.query.filter_by(position=position).all() if position else []
+    candidates = Candidate.query.filter_by(position=position, school=school).all() if position else []
 
-    return render_template('vote_now.html', position=position, candidates=candidates, positions=positions)
+    return render_template('vote_now.html', position=position, candidates=candidates, positions=positions,
+                           school=school)
 
 
 @app.route('/confirm_vote', methods=['GET', 'POST'])
 @login_required
 def confirm_vote():
+    print("🔵 confirm_vote() route accessed!")
+
+    # Fetch votes from session
     votes = session.get('votes', {})
+    print("Votes stored in session before submission:", votes)  # Debugging
+
+    if not votes:  # Handle case where no votes exist
+        print("❌ ERROR: No votes found in session!")
+        flash("No votes found. Please vote before confirming.", "danger")
+        return redirect(url_for('vote_now'))
 
     if request.method == 'POST':
         voter_id = current_user.id
+        print("Voter ID:", voter_id)  # Debugging step
+
         for position, candidate_id in votes.items():
-            new_vote = Vote(voter_id=voter_id, candidate_id=int(candidate_id), position=position,
-                            timestamp=datetime.now())
+            print(f"Saving Vote: {position} -> {candidate_id}")  # Debugging step
+            new_vote = Vote(
+                voter_id=voter_id,
+                candidate_id=int(candidate_id),
+                position=position,
+                timestamp=datetime.now()
+            )
             db.session.add(new_vote)
 
-        db.session.commit()
-        session.pop('votes', None)  # Clear session votes after submitting
-        flash("Your vote has been submitted successfully!", "success")
-        return redirect(url_for('dashboard'))
+        try:
+            db.session.commit()
+            print("✅ Vote successfully saved to the database.")
+            session.pop('votes', None)  # Clear session votes after submitting
+            flash("Your vote has been submitted successfully!", "success")
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Error saving votes:", e)
+            flash("An error occurred while saving your vote. Please try again.", "danger")
 
     return render_template('confirm_vote.html', votes=votes)
 
@@ -262,9 +297,38 @@ def api_vote():
     data = request.get_json()
     position = data.get('position')
     candidate_id = data.get('candidate_id')
+
     session.setdefault('votes', {})
     session['votes'][position] = candidate_id
+    session.modified = True
+
+    print("Votes stored in session:", session.get('votes'))
+
     return jsonify({"message": "Vote stored temporarily"}), 200
+
+@app.route('/api/store_votes', methods=['POST'])
+@login_required
+def store_votes():
+    data = request.json  # Get votes from frontend
+    if not data:
+        return jsonify({"error": "No votes received"}), 400  # Handle empty votes
+
+    session['votes'] = data  # Store votes in session
+    session.modified = True  # Ensure session updates correctly
+
+    print("✅ Votes stored in session:", session['votes'])  # Debugging
+    return jsonify({"message": "Votes stored successfully", "votes": session['votes']})
+
+
+@app.route('/test_session')
+def test_session():
+    session['test'] = "Hello, Session!"
+    session.modified = True
+    return "Session Set!"
+
+@app.route('/check_session')
+def check_session():
+    return f"Session Value: {session.get('test', 'No session data!')}"
 
 
 @app.route('/logout')
@@ -321,6 +385,21 @@ def get_votes():
     vote_html = "".join([f"<p><strong>{r[0]}</strong> ({r[1]}) - {r[2]} votes</p>" for r in results])
 
     return jsonify({"html": vote_html})
+
+@app.route('/choose_school', methods=['GET'])
+@login_required
+def choose_school():
+    schools = [
+        "School of Agricultural and Environmental Sciences",
+        "School of Business, Economics and Tourism",
+        "School of Education",
+        "School of Engineering and Architecture",
+        "School of Health Sciences",
+        "School of Law, Arts and Social Sciences",
+        "School of Pure And Applied Sciences"
+    ]
+    return render_template('choose_school.html', schools=schools)
+
 
 if __name__ == '__main__':
     with app.app_context():

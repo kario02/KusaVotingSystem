@@ -138,6 +138,21 @@
                     <td><textarea id="manifesto"></textarea></td>
                 </tr>
                 <tr>
+                    <td>School</td>
+                    <td>
+                        <select id="school" name="school" required>
+                            <option value="" disabled selected>Select a School</option>
+                            <option value="School of Agricultural and Environmental Sciences">School of Agricultural and Environmental Sciences</option>
+                            <option value="School of Business, Economics and Tourism">School of Business, Economics and Tourism</option>
+                            <option value="School of Education">School of Education</option>
+                            <option value="School of Engineering and Architecture">School of Engineering and Architecture</option>
+                            <option value="School of Health Sciences">School of Health Sciences</option>
+                            <option value="School of Law, Arts and Social Sciences">School of Law, Arts and Social Sciences</option>
+                            <option value="School of Pure And Applied Sciences">School of Pure And Applied Sciences</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
                     <th>Image</th>
                     <td><input type="file" id="image"></td>
                 </tr>
@@ -222,6 +237,7 @@
         formData.append("name", document.getElementById("name").value);
         formData.append("position", document.getElementById("position").value);
         formData.append("manifesto", document.getElementById("manifesto").value);
+        formData.append("school", document.getElementById("school").value);
         // formData.append("image", document.getElementById("image").files[0]);
 
         let imageInput = document.getElementById("image");

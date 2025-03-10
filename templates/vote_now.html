@@ -118,7 +118,7 @@
 
     <h1>Vote Now</h1>
 
-    <form id="vote-form" method="POST" action="{{ url_for('vote_now') }}">
+    <form id="vote-form" method="POST" action="{{ url_for('confirm_vote') }}">
         <div class="container">
             <div id="voting-steps">
                 <div class="position-container">
@@ -143,17 +143,22 @@
             <div id="summary-section" class="summary">
                 <h2>Confirm Your Votes</h2>
                 <ul id="summary-list"></ul>
+                <form method="POST">
                 <button type="submit" class="vote-btn">Submit Vote</button>
+                </form>
             </div>
         </div>
     </form>
 
     <script>
-        let positions = {{ positions | tojson }};
-        let votes = {};  // Stores selected candidates
-        let currentPositionIndex = 0;
-
         document.addEventListener("DOMContentLoaded", function () {
+
+
+            let positions = {{ positions | tojson }};
+            let votes = {};  // Stores selected candidates
+            let currentPositionIndex = 0;
+
+
             const positionDropdown = document.getElementById("position-dropdown");
             const candidatesContainer = document.getElementById("candidates-container");
             const prevBtn = document.getElementById("prev-btn");
@@ -171,7 +176,9 @@
                 positionDropdown.value = positions[index]; // Auto-select position
                 candidatesContainer.innerHTML = ""; // Clear previous candidates
 
-                fetch(`/api/get_candidates?position=${positions[index]}`)
+                 const school = new URLSearchParams(window.location.search).get("school"); // Get school from URL
+
+                fetch(`/api/get_candidates?position=${positions[index]}&school=${encodeURIComponent(school)}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.candidates.length === 0) {
@@ -215,6 +222,22 @@
                 }
                 voteBtn.style.display = "block";
             }
+
+            nextBtn.addEventListener("click", function (event) {
+                event.preventDefault(); // Stop normal form submission
+
+                fetch("/api/store_votes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(votes)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Votes stored:", data);
+                    window.location.href = "/confirm_vote"; // Redirect to confirmation page
+                })
+                .catch(error => console.error("Error storing votes:", error));
+            });
 
             nextBtn.addEventListener("click", () => {
                 if (!votes[positions[currentPositionIndex]]) return;
