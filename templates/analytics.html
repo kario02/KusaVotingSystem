@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='analytics.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #144ac8, #004080);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #06305e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #ffffff;
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filters select, .filters input {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        .stats-grid {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #1171ed;
+            padding: 20px;
+            border-radius: 10px;
+            width: 40%;
+            box-shadow: 0px 4px 10px rgba(70, 27, 27, 0.93);
+            font-style: oblique;
+            font-family: 'Consolas', 'Menlo', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+        }
+
+        .download-btn, .btn {
+            background-color: #1171ed;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voting Analytics</h1>
+
+        <!-- Filters -->
+        <div class="filters">
+            <select id="position-filter">
+                <option value="">All Positions</option>
+                {% for position in positions %}
+                    <option value="{{ position }}">{{ position }}</option>
+                {% endfor %}
+            </select>
+
+            <select id="school-filter">
+                <option value="">All Schools</option>
+                {% for school in schools %}
+                    <option value="{{ school }}">{{ school }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="date" id="date-filter">
+
+            <button class="btn" onclick="applyFilters()">Apply Filters</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <h2>Total Votes</h2>
+                <p id="total-votes">{{ total_votes }}</p>
+            </div>
+            <div class="stat-box">
+                <h2>Positions Voted</h2>
+                <ul id="votes-per-position">
+                    {% for position, count in votes_per_position %}
+                        <li>{{ position }}: {{ count }} votes</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="candidateChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="positionChart"></canvas>
+        </div>
+
+        <button class="download-btn" onclick="downloadReport()">Download Report</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    fetchAnalyticsData();
+
+    function fetchAnalyticsData(filters = {}) {
+        let url = new URL("/api/analytics_data", window.location.origin);
+        Object.keys(filters).forEach(key => {
+            if (filters[key]) url.searchParams.append(key, filters[key]);  // Only append if value exists
+        });
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("total-votes").innerText = data.total_votes;
+
+                let positionList = "";
+                data.positions.forEach(p => {
+                    positionList += `<li>${p.position}: ${p.votes} votes</li>`;
+                });
+                document.getElementById("votes-per-position").innerHTML = positionList;
+
+                renderCharts(data);
+            })
+            .catch(error => console.error("Error fetching analytics data:", error));
+    }
+
+    function renderCharts(data) {
+        const candidateCtx = document.getElementById("candidateChart").getContext("2d");
+        const positionCtx = document.getElementById("positionChart").getContext("2d");
+
+        if (window.candidateChart) window.candidateChart.destroy();
+        if (window.positionChart) window.positionChart.destroy();
+
+        window.candidateChart = new Chart(candidateCtx, {
+            type: "bar",
+            data: {
+                labels: data.candidates.map(c => c.name),
+                datasets: [{
+                    label: "Votes",
+                    data: data.candidates.map(c => c.votes),
+                    backgroundColor: "rgba(54, 162, 235, 0.6)"
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        window.positionChart = new Chart(positionCtx, {
+            type: "pie",
+            data: {
+                labels: data.positions.map(p => p.position),
+                datasets: [{
+                    label: "Votes",
+                    data: data.positions.map(p => p.votes),
+                    backgroundColor: ["#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0"]
+                }]
+            },
+            options: { responsive: true }
+        });
+    }
+
+    document.getElementById("filter-btn").addEventListener("click", function () {
+        fetchAnalyticsData({
+            position: document.getElementById("position-filter").value,
+            school: document.getElementById("school-filter").value,
+            date: document.getElementById("date-filter").value
+        });
+    });
+
+    document.getElementById("download-btn").addEventListener("click", function () {
+        window.location.href = "/download_report";
+    });
+});
+
+    </script>
+</body>
+</html>

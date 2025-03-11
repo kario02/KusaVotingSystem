@@ -1,15 +1,17 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_bcrypt import Bcrypt
-import os
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
-import mysql.connector
 from datetime import datetime
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 from flask_session import Session
+import os
+import pymysql
+import mysql.connector
+import pandas as pd
 
 
 app = Flask(__name__)
@@ -40,6 +42,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 candidates = []
+
+def get_db_connection():
+    return pymysql.connect(host='localhost', user='root', password='brayookk7', database='kusa')
 
 # Define models
 class User(db.Model, UserMixin):
@@ -320,15 +325,75 @@ def store_votes():
     return jsonify({"message": "Votes stored successfully", "votes": session['votes']})
 
 
-@app.route('/test_session')
-def test_session():
-    session['test'] = "Hello, Session!"
-    session.modified = True
-    return "Session Set!"
+@app.route('/analytics')
+def analytics():
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-@app.route('/check_session')
-def check_session():
-    return f"Session Value: {session.get('test', 'No session data!')}"
+    cursor.execute("SELECT COUNT(*) FROM vote")
+    total_votes = cursor.fetchone()[0]
+
+    cursor.execute("SELECT position, COUNT(*) FROM vote GROUP BY position")
+    votes_per_position = cursor.fetchall()
+
+    cursor.execute("SELECT DISTINCT position FROM candidate")
+    positions = [row[0] for row in cursor.fetchall()]
+
+    cursor.execute("SELECT DISTINCT school FROM user")
+    schools = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+    return render_template('analytics.html',
+                           total_votes=total_votes,
+                           votes_per_position=votes_per_position,
+                           positions=positions,
+                           schools=schools)
+
+
+@app.route('/api/analytics_data')
+def analytics_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    position = request.args.get("position")
+    school = request.args.get("school")
+    date = request.args.get("date")
+
+    filters = []
+    params = []
+
+    if position and position.lower() != "all":
+        filters.append("candidates.position = %s")
+        params.append(position)
+
+    if school and school.lower() != "all":
+        filters.append("user.school = %s")
+        params.append(school)
+
+    if date:
+        filters.append("DATE(votes.timestamp) = %s")
+        params.append(date)
+
+    filter_query = " AND ".join(filters)
+    query = f"""
+        SELECT candidate.name, COUNT(vote.candidate_id) AS vote_count
+        FROM candidate 
+        LEFT JOIN vote ON candidate.id = vote.candidate_id 
+        LEFT JOIN user ON vote.voter_id = user.id
+        {('WHERE ' + filter_query) if filters else ''}
+        GROUP BY candidate.id
+    """
+    cursor.execute(query, tuple(params))
+    candidate_data = [{"name": row[0], "votes": row[1]} for row in cursor.fetchall()]
+
+    cursor.execute("SELECT COUNT(*) FROM vote")
+    total_votes = cursor.fetchone()[0]
+
+    cursor.execute("SELECT position, COUNT(*) FROM vote GROUP BY position")
+    position_data = [{"position": row[0], "votes": row[1]} for row in cursor.fetchall()]
+
+    conn.close()
+    return jsonify({"total_votes": total_votes, "candidates": candidate_data, "positions": position_data})
 
 
 @app.route('/logout')
