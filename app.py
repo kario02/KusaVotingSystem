@@ -25,6 +25,7 @@ app.config['MYSQL_DB'] = 'kusa'
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_USE_SIGNER"] = True
+app.secret_key = "Your_secret_key_here"
 Session(app)
 CORS(app)
 
@@ -51,6 +52,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
+    school = db.Column(db.String(250), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="voter")  # Optional: Track user roles
 
@@ -115,12 +117,22 @@ def sign_up():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
-        password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
-        new_user = User(username=username, email=email, password=password)
+        school = request.form['school']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        # Check if passwords match
+        if password != confirm_password:
+            flash('Passwords do not match. Please try again.', 'error')
+            return redirect(url_for('sign_up'))
+
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = User(username=username, email=email, school=school, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         flash('Account created successfully! Please login.', 'success')
         return redirect(url_for('login'))
+
     return render_template('sign_up.html')
 
 @app.route('/dashboard')
@@ -131,29 +143,30 @@ def dashboard():
     cursor.execute("SELECT id, name, position, manifesto, image FROM candidate")
     candidates = cursor.fetchall()
 
-
     # Convert candidates to a list of dictionaries
     candidates_list = [
         {"id": c[0], "name": c[1], "position": c[2], "manifesto": c[3], "image": c[4]}
         for c in candidates
     ]
-    # Fetch voting progress (Modify this based on your DB structure)
+    # Count total votes casted
+    cursor.execute("SELECT COUNT(*) FROM vote")
+    total_votes = cursor.fetchone()[0]
+
+    # Get top candidate with most votes
     cursor.execute("""
-           SELECT TIME(timestamp) AS vote_time, COUNT(*) AS vote_count
-           FROM vote
-           GROUP BY vote_time
-           ORDER BY vote_time
+           SELECT c.name, COUNT(v.id) AS vote_count
+           FROM vote v
+           JOIN candidate c ON v.candidate_id = c.id
+           GROUP BY v.candidate_id
+           ORDER BY vote_count DESC
+           LIMIT 1
        """)
-    vote_data = cursor.fetchall()
+    top_candidate = cursor.fetchone()
     cursor.close()
 
+    print(f"Current User: {current_user.__dict__}")
 
-    # Convert vote data into format suitable for Chart.js
-    voting_progress = {
-        "labels": [str(row[0]) for row in vote_data],  # Time of votes
-        "data": [row[1] for row in vote_data]  # Number of votes
-    }
-    return render_template('dashboard.html', candidates=candidates_list, voting_progress=voting_progress, user=current_user)
+    return render_template('dashboard.html', candidates=candidates_list, total_votes=total_votes, top_candidate=top_candidate, user=current_user)
 
 @app.route('/candidates', methods=['GET'])
 def gets_candidates():
@@ -400,7 +413,7 @@ def analytics_data():
 @login_required
 def logout():
     logout_user()
-    flash("You have been logged out.", "info")
+    flash("You have been logged out.", "success")
     return redirect(url_for('kusa'))
 @app.route('/kusa')
 def kusa():
@@ -464,6 +477,57 @@ def choose_school():
         "School of Pure And Applied Sciences"
     ]
     return render_template('choose_school.html', schools=schools)
+
+
+@app.route('/profile')
+@login_required
+def profile():
+    cursor = mysql.connection.cursor()
+
+    # Fetch the user's votes
+    cursor.execute("""
+        SELECT candidate.name, candidate.position 
+        FROM vote 
+        JOIN candidate ON vote.candidate_id = candidate.id
+        WHERE vote.voter_id = %s
+    """, (current_user.id,))
+
+    votes = cursor.fetchall()
+
+    cursor.close()
+
+    votes_list = [{"candidate_name": v[0], "position": v[1]} for v in votes]
+
+    return render_template('profile.html', user=current_user, votes=votes_list)
+
+
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    username = request.form['username']
+    email = request.form['email']
+    current_password = request.form['current_password']
+    new_password = request.form.get('new_password')
+
+    if not check_password_hash(current_user.password, current_password):
+        flash('Incorrect current password', 'danger')
+        return redirect(url_for('profile'))
+
+    cursor = mysql.connection.cursor()
+
+    if new_password:
+        hashed_password = generate_password_hash(new_password)
+        cursor.execute("UPDATE user SET username=%s, email=%s, password=%s WHERE id=%s",
+                       (username, email, hashed_password, current_user.id))
+    else:
+        cursor.execute("UPDATE user SET username=%s, email=%s WHERE id=%s",
+                       (username, email, current_user.id))
+
+    mysql.connection.commit()
+    cursor.close()
+
+    flash('Profile updated successfully!', 'success')
+    return redirect(url_for('profile'))
 
 
 if __name__ == '__main__':

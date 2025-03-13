@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - KUSA Voting System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #144ac8, #004080, #0059b3);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 50%;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        .tab.active {
+            background: white;
+            color: black;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            background: #004080;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #002855;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background: #06305e;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+    </style>
+</head>
+<body>
+<a href="{{ url_for('dashboard') }}" class="home-btn">🏠 Home</a>
+
+<div class="container">
+    <h2>Hey☺️, {{ user.username }}</h2>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('change-details')">Change Details</div>
+        <div class="tab" onclick="switchTab('view-votes')">View How You Voted</div>
+    </div>
+
+    <!-- Change Details Tab -->
+    <div id="change-details" class="tab-content active">
+        <h3>Change Your Details</h3>
+        <form action="/update_profile" method="POST">
+            <input type="text" name="username" placeholder="New Username" value="{{ user.username }}" required>
+            <input type="email" name="email" placeholder="New Email" value="{{ user.email }}" required>
+            <input type="password" name="current_password" placeholder="Current Password" required>
+            <input type="password" name="new_password" placeholder="New Password">
+            <button type="submit">Update Profile</button>
+        </form>
+    </div>
+
+    <!-- View How You Voted Tab -->
+    <div id="view-votes" class="tab-content">
+        <h3>Your Votes</h3>
+        {% if votes %}
+            <ul>
+                {% for vote in votes %}
+                    <li><strong>{{ vote.position }}:</strong> {{ vote.candidate_name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>You have not voted yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+        document.getElementById(tabId).classList.add('active');
+        document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+    }
+</script>
+
+</body>
+</html>

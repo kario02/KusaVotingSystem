@@ -136,6 +136,31 @@ button.btn:hover {
 .signup-link a:hover {
     text-decoration: underline;
 }
+.flash-messages {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.flash-message {
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 10px;
+    text-align: center;
+}
+
+.flash-message.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.flash-message.danger {
+    background-color: #dc3545;
+    color: white;
+}
+
 </style>
 <body>
     <div class="login-container">
@@ -144,6 +169,18 @@ button.btn:hover {
                 <i class="bi bi-person-circle" style="font-size: 1.5em; margin-right: 10px;"></i>
                 Login to KUSA System
             </h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+
             <form action="{{ url_for('login') }}" method="POST">
                 <div class="form-group">
 

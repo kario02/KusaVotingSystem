@@ -228,11 +228,18 @@
     <div class="main-content">
         <div class="header">
             <h1>KUSA Voting System Dashboard</h1>
+            <h2>Welcome, {{ user.username if user.username else 'Guest' }}</h2>
         </div>
 
         <div id="progress" class="card">
             <h2>Live Voting Results</h2>
-            <div id="vote-results">Loading...</div>
+            <p><strong>Total Votes Casted:</strong> {{ total_votes }}</p>
+
+            {% if top_candidate %}
+                <p><strong>Top Candidate:</strong> {{ top_candidate[0] }} ({{ top_candidate[1] }} votes)</p>
+            {% else %}
+                <p>No votes yet.</p>
+            {% endif %}
         </div>
 
 
